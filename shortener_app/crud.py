@@ -2,9 +2,10 @@ from sqlalchemy.orm import Session
 
 from . import keygen, models, schemas
 
+
 def create_db_url(db: Session, url: schemas.URLBase) -> models.URL:
     key = keygen.create_unique_random_key(db)
-    secret_key = f"{key}_{keygen.create_random_key(length=8)}"
+    secret_key = keygen.generate_secret_key(key)
     db_url = models.URL(
         target_url=url.target_url, key=key, secret_key=secret_key
     )
@@ -13,12 +14,14 @@ def create_db_url(db: Session, url: schemas.URLBase) -> models.URL:
     db.refresh(db_url)
     return db_url
 
+
 def get_db_url_by_key(db: Session, url_key: str) -> models.URL:
     return (
         db.query(models.URL)
         .filter(models.URL.key == url_key, models.URL.is_active)
         .first()
     )
+
 
 def get_db_url_by_secret_key(db: Session, secret_key: str) -> models.URL:
     return (
@@ -27,11 +30,13 @@ def get_db_url_by_secret_key(db: Session, secret_key: str) -> models.URL:
         .first()
     )
 
+
 def update_db_clicks(db: Session, db_url: schemas.URL) -> models.URL:
     db_url.clicks += 1
     db.commit()
     db.refresh(db_url)
     return db_url
+
 
 def deactivate_db_url_by_secret_key(db: Session, secret_key: str) -> models.URL:
     db_url = get_db_url_by_secret_key(db, secret_key)
@@ -39,4 +44,16 @@ def deactivate_db_url_by_secret_key(db: Session, secret_key: str) -> models.URL:
         db_url.is_active = False
         db.commit()
         db.refresh(db_url)
+    return db_url
+
+
+def create_custom_db_url(db: Session, url: schemas.CustomURL) -> models.URL:
+    key = url.custom_url_key
+    secret_key = keygen.generate_secret_key(key)
+    db_url = models.URL(
+        target_url=url.target_url, key=key, secret_key=secret_key
+    )
+    db.add(db_url)
+    db.commit()
+    db.refresh(db_url)
     return db_url
