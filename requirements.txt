@@ -1,0 +1,5 @@
+fastapi==0.89.1
+pydantic==1.10.4
+SQLAlchemy==1.4.46
+starlette==0.23.1
+validators==0.20.0
